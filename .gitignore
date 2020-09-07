@@ -21,3 +21,9 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# eclipse
+/.project
+/.history
+/settings.json
+.vscode/settings.json
