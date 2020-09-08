@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import io from "socket.io-client";
+import axios from "axios";
 import "./App.css";
 
 class App extends Component {
@@ -67,10 +68,21 @@ class App extends Component {
         // this.socket.emit("join", { empid: 1, space: "66", speaker: 177 }, (err, res) => {
         //   debugger;
         // });
-        this.socket.emit("login", {
-          token:
-            "6ba129f63607780257a36d60fdbb752b79c394e74d059bd7c7f7cf839c0095ffdeb798ed4389eb3ae9f9250542241105f708c073bacd81b4d0677526f90be8f3ece7046050297025e8c103215e9fd2",
-        });
+        axios
+          .post("http://localhost:9090/auth/sdtalk/sdtadm/1/emp/login", {
+            username: "csmaster1",
+            password: "1212",
+          })
+          .then((response) => {
+            debugger;
+            let data = response.data;
+            let token = data.token;
+            // let user = data.user;
+            this.socket.emit("login", {
+              token:
+                token,
+            });
+          });
       }, 2000);
     });
 
