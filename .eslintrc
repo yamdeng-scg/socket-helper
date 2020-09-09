@@ -1,0 +1,17 @@
+{
+  "extends": ["react-app", "plugin:prettier/recommended"],
+  "rules": {
+    "no-alert": "off",
+    "no-console": "off",
+    "no-restricted-globals": "off",
+    "jsx-a11y/anchor-is-valid": "off",
+    "no-script-url": "off",
+    "no-useless-escape": "off"
+  },
+  "env": {
+    "browser": true,
+    "commonjs": true,
+    "es6": true,
+    "jquery": true
+  }
+}

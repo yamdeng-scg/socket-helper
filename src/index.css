@@ -13,3 +13,11 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.ant-divider-horizontal.ant-divider-with-text::before {
+  border-top: 3px solid black;
+}
+
+.ant-divider-horizontal.ant-divider-with-text::after {
+  border-top: 3px solid black;
+}
