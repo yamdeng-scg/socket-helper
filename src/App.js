@@ -66,7 +66,7 @@ class App extends Component {
       loginPassword: Config.defaultLoginPassword,
       listenEventNameListString: Config.listenEventNameListString,
       currentEventName: '',
-      currentEventResponse: 'yamdeng',
+      currentEventResponse: null,
       viewListEvent: true,
       viewWebSocketRequestInfo: true,
       viewSdtSocketList: true,
@@ -113,8 +113,6 @@ class App extends Component {
     // socket 기본 event
     this.onConnect = this.onConnect.bind(this);
     this.onDisconnect = this.onDisconnect.bind(this);
-    this.onMessage = this.onMessage.bind(this);
-    this.onEvent = this.onEvent.bind(this);
 
     // state data reset
     this.resetData = this.resetData.bind(this);
@@ -308,10 +306,6 @@ class App extends Component {
     this.socket = null;
     this.resetData();
   }
-
-  onMessage(event) {}
-
-  onEvent(event) {}
 
   addCustomEvent() {
     let { listenEventNameListString } = this.state;
@@ -672,7 +666,7 @@ class App extends Component {
             {/* protocol reqeust 정보 */}
             <div style={{ display: viewWebSocketRequestInfo ? '' : 'none' }}>
               <Divider orientation="left" style={{ fontWeight: 'bold' }}>
-                protocol request
+                소켓 emit(공통)
               </Divider>
               <Row align="middle" gutter={6}>
                 <Col span={2} align="" style={{ textAlign: 'right' }}>
