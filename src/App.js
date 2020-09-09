@@ -66,7 +66,7 @@ class App extends Component {
       loginPassword: Config.defaultLoginPassword,
       listenEventNameListString: Config.listenEventNameListString,
       currentEventName: '',
-      currentEventResponse: null,
+      currentEventResponse: 'yamdeng',
       viewListEvent: true,
       viewWebSocketRequestInfo: true,
       viewSdtSocketList: true,
@@ -353,6 +353,9 @@ class App extends Component {
     let callbackFunction = null;
     if (isCallbackFunction) {
       callbackFunction = (err, res) => {
+        if (typeof res === 'string') {
+          res = { rootString: res };
+        }
         this.changeWebSocektRequestListToResponse(arrayIndex, res);
       };
     }
