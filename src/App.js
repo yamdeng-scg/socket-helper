@@ -13,14 +13,19 @@ import {
   Modal,
   Tooltip,
   Collapse,
-  Spin
+  Spin,
+  Select
 } from 'antd';
 import ReactJson from 'react-json-view';
 import Config from './Config';
+import Constant from './Constant';
+import Code from './Code';
 import JSONInput from 'react-json-editor-ajrm';
 import locale from 'react-json-editor-ajrm/locale/en';
 import copy from 'copy-to-clipboard';
 import update from 'immutability-helper';
+import _ from 'lodash';
+const { Option } = Select;
 
 const { Panel } = Collapse;
 
@@ -34,12 +39,14 @@ class App extends Component {
       
       연결 url : socketUrl
       현재 상태 : isConnected
-      연결 url 모달 open : isUrlModalOpen
       login api url : loginApiUrl
       id / password : loginId, loginPassword
+      가스앱회원 id : userno
+      가스앱회원으로 socket 연결 여부 : isCustomerConnect
       listen 이벤트 정보 : listenEventNameListString
       현재 응답명 : currentEventName
       현재 응답 정보 : currentEventResponse
+      메시지 전송 영역 view : viewSendMessage
       list event 정보 영역 view : viewListEvent
       protocol request 영역 view : viewWebSocketRequestInfo
       상담톡 웹소켓 요청 목록 view : viewSdtSocketList
@@ -51,7 +58,19 @@ class App extends Component {
       상담톡 요청 소켓 목록 : webSocektRequestList
       로딩중 : isLoading
 
+      메시지 전송 space id : spaceId,
+      전송 메시지: messageText,
+      전송 메시지 타입: messageType,
+      시스템 메시지 여부: isSysMessage,
+      관리자 여부: isOnlyAdmin,
+      직원 여부: isEmp,
+      링크 메시지: linkMessage
+
     */
+
+    let webSocektRequestList = _.filter(Config.webSocektRequestList, (info) => {
+      return !info.isCustomerConnect;
+    });
 
     this.state = {
       socket: null,
@@ -64,9 +83,12 @@ class App extends Component {
       loginApiUrl: Config.defaultLoginApiUrl,
       loginId: Config.defaultLoginId,
       loginPassword: Config.defaultLoginPassword,
+      userno: '',
+      isCustomerConnect: false,
       listenEventNameListString: Config.listenEventNameListString,
       currentEventName: '',
       currentEventResponse: null,
+      viewSendMessage: true,
       viewListEvent: true,
       viewWebSocketRequestInfo: true,
       viewSdtSocketList: true,
@@ -75,8 +97,15 @@ class App extends Component {
       requestWebSocketParamter: null,
       validRequestParamter: true,
       requestCallbackResponse: null,
-      webSocektRequestList: Config.webSocektRequestList,
-      isLoading: false
+      webSocektRequestList: webSocektRequestList,
+      isLoading: false,
+      spaceId: Config.defaultSendMessageValue.space,
+      messageText: Config.defaultSendMessageValue.msg,
+      messageType: Config.defaultSendMessageValue.mtype,
+      isSysMessage: Config.defaultSendMessageValue.sysmsg ? true : false,
+      isOnlyAdmin: Config.defaultSendMessageValue.onlyadm ? true : false,
+      isEmp: Config.defaultSendMessageValue.isemp ? true : false,
+      linkMessage: Config.defaultSendMessageValue.msgname
     };
 
     // 공통 input 변경
@@ -138,6 +167,9 @@ class App extends Component {
     this.changeWebSocektRequestListToResponse = this.changeWebSocektRequestListToResponse.bind(
       this
     );
+
+    // 메시지 전송
+    this.sendMessage = this.sendMessage.bind(this);
   }
 
   handleGlobalError(message, url, lineNumber, column, errorObject) {
@@ -221,6 +253,7 @@ class App extends Component {
       isUrlModalOpen: false,
       currentEventName: '',
       currentEventResponse: null,
+      viewSendMessage: true,
       viewListEvent: true,
       viewWebSocketRequestInfo: true,
       viewSdtSocketList: true,
@@ -250,26 +283,34 @@ class App extends Component {
 
   connect() {
     this.resetData();
-    let { loginApiUrl, loginId, loginPassword } = this.state;
+    let { loginApiUrl, loginId, loginPassword, usesrno } = this.state;
     if (this.socket) {
       this.socket.disconnect();
     }
-    this.setState({ isLoading: true });
-    axios
-      .post(loginApiUrl, {
-        username: loginId,
-        password: loginPassword
-      })
-      .then((response) => {
-        let data = response.data;
-        let token = data.token;
-        let user = data.user;
-        this.setState({ loginUser: user, loginToken: token, isLoading: false });
-        this.connectSocket();
-      })
-      .catch((error) => {
-        this.setState({ isLoading: false });
-      });
+    if (!usesrno) {
+      this.setState({ isLoading: true });
+      axios
+        .post(loginApiUrl, {
+          username: loginId,
+          password: loginPassword
+        })
+        .then((response) => {
+          let data = response.data;
+          let token = data.token;
+          let user = data.user;
+          this.setState({
+            loginUser: user,
+            loginToken: token,
+            isLoading: false
+          });
+          this.connectSocket();
+        })
+        .catch((error) => {
+          this.setState({ isLoading: false });
+        });
+    } else {
+      this.connectSocket();
+    }
   }
 
   disconnect() {
@@ -280,7 +321,10 @@ class App extends Component {
   }
 
   connectSocket() {
-    let { socketUrl } = this.state;
+    let { socketUrl, userno } = this.state;
+    if (userno) {
+      socketUrl = socketUrl + '&userno=' + userno;
+    }
     this.socket = io(socketUrl);
     this.initDefaultSocektEvent();
   }
@@ -291,15 +335,35 @@ class App extends Component {
     this.socket.on('disconnect', this.onDisconnect);
     this.socket.on('message', this.onMessage);
     this.socket.on('event', this.onEvent);
+    this.addCustomEvent();
   }
 
   onConnect() {
-    let { loginToken } = this.state;
+    let { loginToken, userno } = this.state;
     let socket = this.socket;
     this.setState({ socket: socket, isConnected: true });
-    this.socket.emit('login', {
-      token: loginToken
-    });
+    let webSocektRequestList = [];
+    if (!userno) {
+      webSocektRequestList = _.filter(Config.webSocektRequestList, (info) => {
+        return !info.isCustomerConnect;
+      });
+      this.setState({
+        isCustomerConnect: false,
+        webSocektRequestList: webSocektRequestList
+      });
+      this.socket.emit('login', {
+        token: loginToken
+      });
+    } else {
+      webSocektRequestList = _.filter(Config.webSocektRequestList, (info) => {
+        return info.isCustomerConnect;
+      });
+      this.setState({
+        isCustomerConnect: true,
+        messageType: Constant.MESSAGE_TYPE_NORMAL,
+        webSocektRequestList: webSocektRequestList
+      });
+    }
   }
 
   onDisconnect(event) {
@@ -308,17 +372,30 @@ class App extends Component {
   }
 
   addCustomEvent() {
-    let { listenEventNameListString } = this.state;
+    let { listenEventNameListString, userno } = this.state;
     let eventList = listenEventNameListString.split(',');
     let socket = this.socket;
+    // listenEventNameListString = 'payload,message,reads,err,welcome';
     eventList.forEach((eventName) => {
       socket.off(eventName);
-      socket.on(eventName, (customEventResult) => {
-        this.setState({
-          currentEventName: eventName,
-          currentEventResponse: customEventResult
+      let skipEvent = false;
+      if (userno) {
+        if (eventName === 'payload') {
+          skipEvent = true;
+        }
+      } else {
+        if (eventName === 'welcome') {
+          skipEvent = true;
+        }
+      }
+      if (!skipEvent) {
+        socket.on(eventName, (customEventResult) => {
+          this.setState({
+            currentEventName: eventName,
+            currentEventResponse: customEventResult
+          });
         });
-      });
+      }
     });
     alert('커스텀 이벤트가 등록되었습니다');
   }
@@ -343,7 +420,7 @@ class App extends Component {
   }
 
   requestSdtWebsocket(arrayIndex, requestInfo) {
-    let { protocol, parameter, isCallbackFunction } = requestInfo;
+    let { protocol, parameter, onlyValue, isCallbackFunction } = requestInfo;
     let callbackFunction = null;
     if (isCallbackFunction) {
       callbackFunction = (err, res) => {
@@ -353,7 +430,12 @@ class App extends Component {
         this.changeWebSocektRequestListToResponse(arrayIndex, res);
       };
     }
-    this.socket.emit(protocol, parameter, callbackFunction);
+    let newParameter = _.cloneDeep(parameter);
+    if (onlyValue) {
+      this.socket.emit(protocol, newParameter.value, callbackFunction);
+    } else {
+      this.socket.emit(protocol, newParameter, callbackFunction);
+    }
   }
 
   changeWebSocektRequestListToParameter(arrayIndex, updateParameter) {
@@ -376,6 +458,30 @@ class App extends Component {
     this.setState({ webSocektRequestList: updateWebSocektRequestList });
   }
 
+  sendMessage() {
+    let {
+      spaceId,
+      messageText,
+      messageType,
+      isSysMessage,
+      isOnlyAdmin,
+      isEmp,
+      linkMessage
+    } = this.state;
+    let socketParameter = {
+      space: spaceId,
+      msg: messageText,
+      mtype: messageType,
+      msgname: linkMessage,
+      sysmsg: isSysMessage ? 1 : 0,
+      onlyadm: isOnlyAdmin ? 1 : 0,
+      isemp: isEmp ? 1 : 0
+    };
+    this.socket.emit('message', socketParameter, (response) => {
+      console.log('response :' + response);
+    });
+  }
+
   componentDidMount() {
     this.init();
   }
@@ -394,9 +500,11 @@ class App extends Component {
       loginApiUrl,
       loginId,
       loginPassword,
+      userno,
       listenEventNameListString,
       currentEventName,
       currentEventResponse,
+      viewSendMessage,
       viewListEvent,
       viewWebSocketRequestInfo,
       viewSdtSocketList,
@@ -406,9 +514,22 @@ class App extends Component {
       validRequestParamter,
       requestCallbackResponse,
       webSocektRequestList,
-      isLoading
+      isLoading,
+      spaceId,
+      messageText,
+      messageType,
+      isSysMessage,
+      isOnlyAdmin,
+      isEmp,
+      linkMessage,
+      isCustomerConnect
     } = this.state;
     let socketUrlList = Config.socketUrlList;
+    let messageTypeCodeList = Code.messageTypeCodeList;
+    isSysMessage = isCustomerConnect ? false : isSysMessage;
+    isOnlyAdmin = isOnlyAdmin ? false : isOnlyAdmin;
+    isEmp = isEmp ? false : isEmp;
+
     return (
       <div>
         <Spin tip="Loading..." spinning={isLoading}>
@@ -565,10 +686,25 @@ class App extends Component {
                     onChange={(e) => this.changeInput(e, 'loginPassword')}
                   />
                 </Col>
+                <Col span={2} style={{ textAlign: 'right' }}>
+                  가스앱 회원 id
+                </Col>
+                <Col span={4}>
+                  <Input
+                    value={userno}
+                    onChange={(e) => this.changeInput(e, 'userno')}
+                  />
+                </Col>
               </Row>
               <Row style={{ marginTop: 10 }}>
                 <Col span={1} style={{ textAlign: 'right' }}></Col>
                 <Col span={22} style={{ textAlign: 'left' }}>
+                  <Checkbox
+                    checked={viewSendMessage}
+                    onChange={(e) => this.changeCheckbox(e, 'viewSendMessage')}
+                  >
+                    메시지 전송 보기
+                  </Checkbox>
                   <Checkbox
                     checked={viewListEvent}
                     onChange={(e) => this.changeCheckbox(e, 'viewListEvent')}
@@ -591,6 +727,100 @@ class App extends Component {
                   >
                     상담톡 요청 request 보기
                   </Checkbox>
+                </Col>
+              </Row>
+            </div>
+
+            {/* send message 영역 정보 */}
+            <div style={{ display: viewSendMessage ? '' : 'none' }}>
+              <Divider orientation="left" style={{ fontWeight: 'bold' }}>
+                메시저 전송 정보
+              </Divider>
+
+              <Row
+                align="middle"
+                gutter={6}
+                style={{ marginTop: 10, marginBottom: 10 }}
+              >
+                <Col span={2} style={{ textAlign: 'right' }}>
+                  space id
+                </Col>
+                <Col span={4}>
+                  <Input
+                    value={spaceId}
+                    onChange={(e) => this.changeInput(e, 'spaceId')}
+                  />
+                </Col>
+                <Col span={2} style={{ textAlign: 'right' }}>
+                  메시지
+                </Col>
+                <Col span={6}>
+                  <Input
+                    value={messageText}
+                    onChange={(e) => this.changeInput(e, 'messageText')}
+                  />
+                </Col>
+                <Col span={2} style={{ textAlign: 'right' }}>
+                  링크 메시지
+                </Col>
+                <Col span={4}>
+                  <Input
+                    value={linkMessage}
+                    onChange={(e) => this.changeInput(e, 'linkMessage')}
+                    disabled={
+                      isCustomerConnect ||
+                      messageType !== Constant.MESSAGE_TYPE_APP_LINK
+                    }
+                  />
+                </Col>
+              </Row>
+              <Row align="middle" gutter={6}>
+                <Col span={1} style={{ textAlign: 'right' }}></Col>
+                <Col
+                  span={22}
+                  align=""
+                  style={{ textAlign: 'left', marginLeft: 10 }}
+                >
+                  메시지 타입{' '}
+                  <Select
+                    defaultValue={Constant.MESSAGE_TYPE_NORMAL}
+                    value={messageType}
+                    style={{ width: 120 }}
+                    onChange={(value) => this.setState({ messageType: value })}
+                    disabled={isCustomerConnect}
+                  >
+                    {messageTypeCodeList.map((info) => (
+                      <Option value={info.value}>{info.name}</Option>
+                    ))}
+                  </Select>{' '}
+                  <Checkbox
+                    checked={isSysMessage}
+                    disabled={isCustomerConnect}
+                    onChange={(e) => this.changeCheckbox(e, 'isSysMessage')}
+                  >
+                    시스템 메시지
+                  </Checkbox>
+                  <Checkbox
+                    checked={isOnlyAdmin}
+                    disabled={isCustomerConnect}
+                    onChange={(e) => this.changeCheckbox(e, 'isOnlyAdmin')}
+                  >
+                    only관리자
+                  </Checkbox>
+                  <Checkbox
+                    checked={isEmp}
+                    disabled={isCustomerConnect}
+                    onChange={(e) => this.changeCheckbox(e, 'isEmp')}
+                  >
+                    직원여부
+                  </Checkbox>
+                  <Button
+                    type="primary"
+                    onClick={this.sendMessage}
+                    disabled={!isConnected}
+                  >
+                    메시지 전송
+                  </Button>
                 </Col>
               </Row>
             </div>
