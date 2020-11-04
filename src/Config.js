@@ -140,7 +140,7 @@ Config.webSocektRequestList = [
     isCustomerConnect: true
   },
   {
-    name: '방 정보 조회(고객)',
+    name: '방 정보 조회(고객)2',
     protocol: 'spaceinfo',
     parameter: { speaker: 69 },
     isCallbackFunction: true,
