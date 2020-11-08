@@ -29,12 +29,10 @@ Config.socketUrlList = [
 ];
 
 // 기본 url(로컬)
-Config.defaultSocketUrl =
-  'http://localhost:9090?prj=sdtalk&appid=sdtadm&cid=1&token=1aec31172508a8';
+Config.defaultSocketUrl = 'http://localhost:8090';
 
 // 기본 로그인 api url(로컬)
-Config.defaultLoginApiUrl =
-  'http://localhost:9090/auth/sdtalk/sdtadm/1/emp/login';
+Config.defaultLoginApiUrl = 'http://localhost:8090/auth/login';
 
 // 로그인 id 기본값
 Config.defaultLoginId = 'csmaster1';

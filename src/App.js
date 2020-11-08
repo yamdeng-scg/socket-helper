@@ -41,7 +41,7 @@ class App extends Component {
       현재 상태 : isConnected
       login api url : loginApiUrl
       id / password : loginId, loginPassword
-      가스앱회원 id : userno
+      가스앱회원 id : appId
       가스앱회원으로 socket 연결 여부 : isCustomerConnect
       listen 이벤트 정보 : listenEventNameListString
       현재 응답명 : currentEventName
@@ -83,7 +83,8 @@ class App extends Component {
       loginApiUrl: Config.defaultLoginApiUrl,
       loginId: Config.defaultLoginId,
       loginPassword: Config.defaultLoginPassword,
-      userno: '',
+      appId: '',
+      companyId: '1',
       isCustomerConnect: false,
       listenEventNameListString: Config.listenEventNameListString,
       currentEventName: '',
@@ -283,21 +284,22 @@ class App extends Component {
 
   connect() {
     this.resetData();
-    let { loginApiUrl, loginId, loginPassword, usesrno } = this.state;
+    let { loginApiUrl, loginId, loginPassword, appId, companyId } = this.state;
     if (this.socket) {
       this.socket.disconnect();
     }
-    if (!usesrno) {
+    if (!appId) {
       this.setState({ isLoading: true });
       axios
         .post(loginApiUrl, {
-          username: loginId,
-          password: loginPassword
+          loginName: loginId,
+          password: loginPassword,
+          companyId: companyId
         })
         .then((response) => {
           let data = response.data;
           let token = data.token;
-          let user = data.user;
+          let user = data.profile;
           this.setState({
             loginUser: user,
             loginToken: token,
@@ -321,9 +323,12 @@ class App extends Component {
   }
 
   connectSocket() {
-    let { socketUrl, userno } = this.state;
-    if (userno) {
-      socketUrl = socketUrl + '&userno=' + userno;
+    let { socketUrl, appId, companyId, loginToken } = this.state;
+    socketUrl = socketUrl + '?companyId=' + companyId;
+    if (appId) {
+      socketUrl = socketUrl + '&appId=' + appId;
+    } else {
+      socketUrl = socketUrl + '&token=' + loginToken;
     }
     this.socket = io(socketUrl);
     this.initDefaultSocektEvent();
@@ -335,24 +340,24 @@ class App extends Component {
     this.socket.on('disconnect', this.onDisconnect);
     this.socket.on('message', this.onMessage);
     this.socket.on('event', this.onEvent);
+    this.socket.on('welcome', () => {
+      console.log('webcolme!!!!');
+    });
     this.addCustomEvent();
   }
 
   onConnect() {
-    let { loginToken, userno } = this.state;
+    let { appId } = this.state;
     let socket = this.socket;
     this.setState({ socket: socket, isConnected: true });
     let webSocektRequestList = [];
-    if (!userno) {
+    if (!appId) {
       webSocektRequestList = _.filter(Config.webSocektRequestList, (info) => {
         return !info.isCustomerConnect;
       });
       this.setState({
         isCustomerConnect: false,
         webSocektRequestList: webSocektRequestList
-      });
-      this.socket.emit('login', {
-        token: loginToken
       });
     } else {
       webSocektRequestList = _.filter(Config.webSocektRequestList, (info) => {
@@ -372,30 +377,18 @@ class App extends Component {
   }
 
   addCustomEvent() {
-    let { listenEventNameListString, userno } = this.state;
+    let { listenEventNameListString } = this.state;
     let eventList = listenEventNameListString.split(',');
     let socket = this.socket;
     // listenEventNameListString = 'payload,message,reads,err,welcome';
     eventList.forEach((eventName) => {
       socket.off(eventName);
-      let skipEvent = false;
-      if (userno) {
-        if (eventName === 'payload') {
-          skipEvent = true;
-        }
-      } else {
-        if (eventName === 'welcome') {
-          skipEvent = true;
-        }
-      }
-      if (!skipEvent) {
-        socket.on(eventName, (customEventResult) => {
-          this.setState({
-            currentEventName: eventName,
-            currentEventResponse: customEventResult
-          });
+      socket.on(eventName, (customEventResult) => {
+        this.setState({
+          currentEventName: eventName,
+          currentEventResponse: customEventResult
         });
-      }
+      });
     });
     alert('커스텀 이벤트가 등록되었습니다');
   }
@@ -500,7 +493,8 @@ class App extends Component {
       loginApiUrl,
       loginId,
       loginPassword,
-      userno,
+      appId,
+      companyId,
       listenEventNameListString,
       currentEventName,
       currentEventResponse,
@@ -691,8 +685,17 @@ class App extends Component {
                 </Col>
                 <Col span={4}>
                   <Input
-                    value={userno}
-                    onChange={(e) => this.changeInput(e, 'userno')}
+                    value={appId}
+                    onChange={(e) => this.changeInput(e, 'appId')}
+                  />
+                </Col>
+                <Col span={2} style={{ textAlign: 'right' }}>
+                  회사 id
+                </Col>
+                <Col span={4}>
+                  <Input
+                    value={companyId}
+                    onChange={(e) => this.changeInput(e, 'companyId')}
                   />
                 </Col>
               </Row>
