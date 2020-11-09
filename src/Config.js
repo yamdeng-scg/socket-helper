@@ -42,146 +42,112 @@ Config.defaultLoginPassword = '1212';
 
 // 기본 listen event
 Config.listenEventNameListString =
-  'welcome,room-detail,message,message-list,error,read-message,receive-event';
+  'welcome,room-detail,message-list,message,app-error,read-message,receive-event';
 
-// 상담톡 요청 목록 : 상담톡(join, payload, message, reads-emp, leave), 고객(join, message, prehistory, spaceinfo, speaks, reads, end)
+// 상담톡 요청 목록 : room-detail, join, message-list, message, end, save-history, delete-message, send-event, leave, read-message
 Config.webSocektRequestList = [
   {
     name: '방 상세',
     protocol: 'room-detail',
-    parameter: { roomId: 148 },
+    parameter: { roomId: 150 },
     isCallbackFunction: true,
     callbackFunctionResponse: null,
-    isCustomerConnect: true
+    isCustomerConnect: false
+  },
+  {
+    name: '방 조인',
+    protocol: 'join',
+    parameter: { roomId: 150, speakerId: 221 },
+    isCallbackFunction: true,
+    callbackFunctionResponse: null
+  },
+  {
+    name: '메시지 목록(더보기)',
+    protocol: 'message-list',
+    parameter: { roomId: 2, speakerId: 221, startId: 20000 },
+    isCallbackFunction: true,
+    callbackFunctionResponse: null
+  },
+  {
+    name: '메시지 생성',
+    protocol: 'message',
+    parameter: {
+      companyId: '1',
+      roomId: 150,
+      speakerId: 221,
+      mesasgeType: 0,
+      isSystemMessage: 0,
+      message: '메시지입니당',
+      messageAdminType: 0,
+      isEmployee: 0,
+      messageDetail: '',
+      templateId: null
+    },
+    isCallbackFunction: false,
+    callbackFunctionResponse: null
+  },
+  {
+    name: '상담 종료',
+    protocol: 'end',
+    parameter: { roomId: 150 },
+    isCallbackFunction: true,
+    callbackFunctionResponse: null
+  },
+  {
+    name: '이전 히스토리 저장',
+    protocol: 'save-history',
+    parameter: {
+      roomId: 150,
+      history: [
+        {
+          m: '나도 오늘 저녁이 기대된다!',
+          t: '2019-08-23 17:41:28'
+        },
+        {
+          m: 'ㅏㅏㅏㅏㅏㅏ',
+          t: '2019-08-23 17:41:39'
+        }
+      ]
+    },
+    isCallbackFunction: true,
+    callbackFunctionResponse: null
+  },
+  {
+    name: '메시지 삭제',
+    protocol: 'delete-message',
+    parameter: {
+      roomId: 150,
+      id: 2320
+    },
+    isCallbackFunction: true,
+    callbackFunctionResponse: null
+  },
+  {
+    name: '커스텀 이벤트 전달',
+    protocol: 'send-event',
+    parameter: {
+      eventName: 'reload-all',
+      roomId: 150,
+      target: 'all'
+    },
+    isCallbackFunction: false,
+    callbackFunctionResponse: null
+  },
+  {
+    name: '상담사 상담 종료',
+    protocol: 'leave',
+    parameter: { roomId: 150 },
+    isCallbackFunction: false,
+    callbackFunctionResponse: null
+  },
+  {
+    name: '메시지 읽음',
+    protocol: 'read-message',
+    parameter: { roomId: 150, startId: 100, endId: 200, speakerId: 221 },
+    isCallbackFunction: true,
+    callbackFunctionResponse: null
   }
 ];
-
-// // 상담톡 요청 목록 : 상담톡(join, payload, message, reads-emp, leave), 고객(join, message, prehistory, spaceinfo, speaks, reads, end)
-// Config.webSocektRequestList = [
-//   {
-//     name: '방 조인(상담사)',
-//     protocol: 'join',
-//     parameter: { empid: 1, space: '9', speaker: 177 },
-//     isCallbackFunction: true,
-//     callbackFunctionResponse: null,
-//     isCustomerConnect: false
-//   },
-//   {
-//     name: 'payload',
-//     protocol: 'payload',
-//     parameter: {
-//       cmd: 'reload-spaces-by-admin',
-//       space: 9
-//     },
-//     isCallbackFunction: false,
-//     callbackFunctionResponse: null,
-//     isCustomerConnect: false
-//   },
-//   {
-//     name: '메시지 전송(상담사)',
-//     protocol: 'message',
-//     parameter: {
-//       space: 9,
-//       msg: 'scgmsc://hanbill/regist',
-//       mtype: 4,
-//       sysmsg: 0,
-//       onlyadm: 0,
-//       isemp: 1,
-//       msgname: '요금상세'
-//     },
-//     isCallbackFunction: true,
-//     callbackFunctionResponse: null,
-//     isCustomerConnect: false
-//   },
-
-//   {
-//     name: '메시지 읽음(상담사)',
-//     protocol: 'reads-emp',
-//     parameter: {
-//       space: 9,
-//       startid: 2483,
-//       lastid: 2484,
-//       speaker: 177
-//     },
-//     isCallbackFunction: false,
-//     callbackFunctionResponse: null,
-//     isCustomerConnect: false
-//   },
-//   {
-//     name: '방나가기(상담사)',
-//     protocol: 'leave',
-//     parameter: { space: '9' },
-//     isCallbackFunction: false,
-//     callbackFunctionResponse: null,
-//     isCustomerConnect: false
-//   },
-//   {
-//     name: '방 조인(고객)',
-//     protocol: 'join',
-//     parameter: { space: '9' },
-//     isCallbackFunction: true,
-//     callbackFunctionResponse: null,
-//     isCustomerConnect: true
-//   },
-//   {
-//     name: '메시지 전송(고객)',
-//     protocol: 'message',
-//     parameter: {
-//       space: 9,
-//       msg: 'yap yap',
-//       mtype: 0
-//     },
-//     isCallbackFunction: true,
-//     callbackFunctionResponse: null,
-//     isCustomerConnect: true
-//   },
-//   {
-//     name: '이전 히스토리 저장(고객)',
-//     protocol: 'prehistory',
-//     parameter: {
-//       space: '9',
-//       data: [
-//         { m: '...', t: '2018-06-26 05:23:05' },
-//         { m: '[상담사와 채팅하기] 클릭 1', t: '2018-06-26 05:23:11' }
-//       ]
-//     },
-//     isCallbackFunction: false,
-//     callbackFunctionResponse: null,
-//     isCustomerConnect: true
-//   },
-//   {
-//     name: '방 정보 조회(고객)2',
-//     protocol: 'spaceinfo',
-//     parameter: { speaker: 69 },
-//     isCallbackFunction: true,
-//     callbackFunctionResponse: null,
-//     isCustomerConnect: true
-//   },
-//   {
-//     name: '메시지 목록(고객)',
-//     protocol: 'speaks',
-//     parameter: { space: '9' },
-//     isCallbackFunction: true,
-//     callbackFunctionResponse: null,
-//     isCustomerConnect: true
-//   },
-//   {
-//     name: '메시지 읽음(고객)',
-//     protocol: 'reads',
-//     parameter: { space: 9, startid: 111, lastid: 333 },
-//     isCallbackFunction: false,
-//     callbackFunctionResponse: null,
-//     isCustomerConnect: true
-//   },
-//   {
-//     name: '방 나가기(고객)',
-//     protocol: 'end',
-//     parameter: { space: '9' },
-//     isCallbackFunction: true,
-//     callbackFunctionResponse: null,
-//     isCustomerConnect: true
-//   }
-// ];
 
 Config.defaultSendMessageValue = {
   space: 9,

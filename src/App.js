@@ -380,7 +380,7 @@ class App extends Component {
     let webSocektRequestList = [];
     if (!appId) {
       webSocektRequestList = _.filter(Config.webSocektRequestList, (info) => {
-        return !info.isCustomerConnect;
+        return true;
       });
       this.setState({
         isCustomerConnect: false,
@@ -388,7 +388,7 @@ class App extends Component {
       });
     } else {
       webSocektRequestList = _.filter(Config.webSocektRequestList, (info) => {
-        return info.isCustomerConnect;
+        return true;
       });
       this.setState({
         isCustomerConnect: true,
