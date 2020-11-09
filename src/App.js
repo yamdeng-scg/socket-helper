@@ -83,7 +83,10 @@ class App extends Component {
       loginApiUrl: Config.defaultLoginApiUrl,
       loginId: Config.defaultLoginId,
       loginPassword: Config.defaultLoginPassword,
+      memberName: '',
       appId: '',
+      appMemberName: '',
+      appTelNumber: '',
       companyId: '1',
       isCustomerConnect: false,
       listenEventNameListString: Config.listenEventNameListString,
@@ -284,7 +287,14 @@ class App extends Component {
 
   connect() {
     this.resetData();
-    let { loginApiUrl, loginId, loginPassword, appId, companyId } = this.state;
+    let {
+      loginApiUrl,
+      loginId,
+      loginPassword,
+      memberName,
+      appId,
+      companyId
+    } = this.state;
     if (this.socket) {
       this.socket.disconnect();
     }
@@ -294,7 +304,8 @@ class App extends Component {
         .post(loginApiUrl, {
           loginName: loginId,
           password: loginPassword,
-          companyId: companyId
+          companyId: companyId,
+          name: memberName
         })
         .then((response) => {
           let data = response.data;
@@ -319,14 +330,30 @@ class App extends Component {
     if (this.socket) {
       this.socket.disconnect();
       this.resetData();
+    } else {
+      this.resetData();
     }
   }
 
   connectSocket() {
-    let { socketUrl, appId, companyId, loginToken } = this.state;
+    let {
+      socketUrl,
+      appId,
+      appMemberName,
+      appTelNumber,
+      companyId,
+      loginToken
+    } = this.state;
     socketUrl = socketUrl + '?companyId=' + companyId;
     if (appId) {
-      socketUrl = socketUrl + '&appId=' + appId;
+      socketUrl =
+        socketUrl +
+        '&appId=' +
+        appId +
+        '&name=' +
+        appMemberName +
+        '&telNumber=' +
+        appTelNumber;
     } else {
       socketUrl = socketUrl + '&token=' + loginToken;
     }
@@ -390,7 +417,7 @@ class App extends Component {
         });
       });
     });
-    alert('커스텀 이벤트가 등록되었습니다');
+    // alert('커스텀 이벤트가 등록되었습니다');
   }
 
   requestWebSocket() {
@@ -401,7 +428,7 @@ class App extends Component {
     } = this.state;
     let callbackFunction = null;
     if (requestWebSocketCallbackEnable) {
-      callbackFunction = (err, res) => {
+      callbackFunction = (res, err) => {
         this.setState({ requestCallbackResponse: res });
       };
     }
@@ -416,7 +443,7 @@ class App extends Component {
     let { protocol, parameter, onlyValue, isCallbackFunction } = requestInfo;
     let callbackFunction = null;
     if (isCallbackFunction) {
-      callbackFunction = (err, res) => {
+      callbackFunction = (res, err) => {
         if (typeof res === 'string') {
           res = { rootString: res };
         }
@@ -494,6 +521,9 @@ class App extends Component {
       loginId,
       loginPassword,
       appId,
+      memberName,
+      appMemberName,
+      appTelNumber,
       companyId,
       listenEventNameListString,
       currentEventName,
@@ -663,6 +693,17 @@ class App extends Component {
               </Row>
               <Row align="middle" gutter={6} style={{ marginTop: 10 }}>
                 <Col span={2} style={{ textAlign: 'right' }}>
+                  회사 id
+                </Col>
+                <Col span={4}>
+                  <Input
+                    value={companyId}
+                    onChange={(e) => this.changeInput(e, 'companyId')}
+                  />
+                </Col>
+              </Row>
+              <Row align="middle" gutter={6} style={{ marginTop: 10 }}>
+                <Col span={2} style={{ textAlign: 'right' }}>
                   로그인 ID
                 </Col>
                 <Col span={4}>
@@ -681,7 +722,18 @@ class App extends Component {
                   />
                 </Col>
                 <Col span={2} style={{ textAlign: 'right' }}>
-                  가스앱 회원 id
+                  상담사 이름
+                </Col>
+                <Col span={4}>
+                  <Input
+                    value={memberName}
+                    onChange={(e) => this.changeInput(e, 'memberName')}
+                  />
+                </Col>
+              </Row>
+              <Row align="middle" gutter={6} style={{ marginTop: 10 }}>
+                <Col span={2} style={{ textAlign: 'right' }}>
+                  가스앱 ID
                 </Col>
                 <Col span={4}>
                   <Input
@@ -690,12 +742,21 @@ class App extends Component {
                   />
                 </Col>
                 <Col span={2} style={{ textAlign: 'right' }}>
-                  회사 id
+                  가스앱 회원 이름
                 </Col>
                 <Col span={4}>
                   <Input
-                    value={companyId}
-                    onChange={(e) => this.changeInput(e, 'companyId')}
+                    value={appMemberName}
+                    onChange={(e) => this.changeInput(e, 'appMemberName')}
+                  />
+                </Col>
+                <Col span={2} style={{ textAlign: 'right' }}>
+                  가스앱 회원 폰번호
+                </Col>
+                <Col span={4}>
+                  <Input
+                    value={appTelNumber}
+                    onChange={(e) => this.changeInput(e, 'appTelNumber')}
                   />
                 </Col>
               </Row>
