@@ -41,6 +41,9 @@ class App extends Component {
       현재 상태 : isConnected
       login api url : loginApiUrl
       id / password : loginId, loginPassword
+      회원 이름 : memberName
+      가스앱 고객 이름 :appMemberName
+      가스앱 고객 전화번호 : appTelNumber
       가스앱회원 id : appId
       가스앱회원으로 socket 연결 여부 : isCustomerConnect
       listen 이벤트 정보 : listenEventNameListString
